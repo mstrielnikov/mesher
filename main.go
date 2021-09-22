@@ -1,88 +1,59 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
-	"log"
 	"net"
-)
-
-const (
-	HostIp4Addr = "localhost"
-	HostIp4Port = "9090"
-	Host        = HostIp4Addr + ":" + HostIp4Port
+	"time"
 )
 
 var (
-	clients  = make(map[string]net.Conn)
-	leaving  = make(chan message)
-	messages = make(chan message)
+	Peers        = make(map[string]net.Conn)
+	BufferRead   = make([]byte, 1024)
+	LocalhostIp4 = "localhost:0"
+	MulticastIp4 = "224.0.0.1:0"
 )
 
-type message struct {
-	text    string
-	address string
-}
-
 func main() {
-	listen, err := net.Listen("tcp", Host)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	go broadcaster()
 	for {
-		conn, err := listen.Accept()
-		if err != nil {
-			log.Print(err)
-			continue
+		//Resolve multicast addr
+		multicastAddr, err := ResolveMulticast(MulticastIp4)
+		ThenTerminate(LogError(err))
+		//Create multicast socket
+		socketMulticast, err := net.DialUDP("udp", nil, multicastAddr)
+		ThenTerminate(LogError(err))
+
+		for {
+			_, err := socketMulticast.Write([]byte("Ping"))
+			ThenTerminate(LogError(err))
+			time.Sleep(1 * time.Second)
 		}
-		go handle(conn)
 	}
 
-}
-func handle(conn net.Conn) {
-	clients[conn.RemoteAddr().String()] = conn
-
-	messages <- newMessage(" joined.", conn)
-
-	input := bufio.NewScanner(conn)
-	for input.Scan() {
-		messages <- newMessage(": "+input.Text(), conn)
-	}
-
-	//Delete client form map
-	delete(clients, conn.RemoteAddr().String())
-
-	leaving <- newMessage(" has left.", conn)
-
-	conn.Close() // NOTE: ignoring network errors
-}
-
-func newMessage(msg string, conn net.Conn) message {
-	addr := conn.RemoteAddr().String()
-	return message{
-		text:    addr + msg,
-		address: addr,
-	}
-}
-
-func broadcaster() {
 	for {
-		select {
-		case msg := <-messages:
-			for _, conn := range clients {
-				if msg.address == conn.RemoteAddr().String() {
-					continue
-				}
-				fmt.Fprintln(conn, msg.text) // NOTE: ignoring network errors
-			}
+		//Resolve multicast addr
+		multicastAddr, err := ResolveMulticast(MulticastIp4)
+		ThenTerminate(LogError(err))
+		//Create multicast socket
+		socketMulticast, err := net.ListenMulticastUDP("udp", nil, multicastAddr)
+		ThenTerminate(LogError(err))
+		err = socketMulticast.SetReadBuffer(1024)
+		ThenTerminate(LogError(err))
 
-		case msg := <-leaving:
-			for _, conn := range clients {
-				fmt.Fprintln(conn, msg.text) // NOTE: ignoring network errors
-			}
+		for {
+			_, src, err := socketMulticast.ReadFromUDP(BufferRead)
+			ThenTerminate(LogError(err))
+			fmt.Println(src.IP.String())
+			//Implement: check if peer is commected already1
+			//trim := bytes.Trim(BufferRead, "\x00")
+			//peerAddress := src.IP.String() + string(trim[5+64:])
 
 		}
 	}
+
+	//Create listening socket
+	// socketListener, err := net.Listen("tcp4", LocalhostIp4)
+	// ThenTerminate(LogError(err))
+
+	// defer socketMulticast.Close()
+	// defer socketListener.Close()
 }
