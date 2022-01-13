@@ -9,6 +9,8 @@
 * [P2P chat with telnet](https://github.com/Quantum-Sicarius/p2pChat)
 * [Peerchat](https://github.com/worldveil/peerchat)
 * [UDP multicast](https://github.com/dmichael/go-multicast)
+* [Go Messenger project example](https://github.com/nicolasparada/go-messenger-demo)
+* [GO chat example](https://mehranbehnam77.medium.com/how-to-write-the-simplest-chat-server-in-golang-f70ba7abd94a)
 
 *Cryptography*:
 * [ECDH: curve25519](https://asecuritysite.com/encryption/go_25519ecdh)
