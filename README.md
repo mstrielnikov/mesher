@@ -15,6 +15,8 @@
 *Cryptography*:
 * [ECDH: curve25519](https://asecuritysite.com/encryption/go_25519ecdh)
 
+*NAT braker*
+
 # DOCS
 
 # Resources
