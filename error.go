@@ -6,11 +6,11 @@ import (
 	"os"
 )
 
-func Ok(err error) {
+func Ok(err error) error {
 	if err != nil {
 		fmt.Println(err.Error())
-		os.Exit(-1)
 	}
+	return err
 }
 
 func Log(err error) error {
@@ -18,4 +18,10 @@ func Log(err error) error {
 		log.Fatal(err.Error())
 	}
 	return err
+}
+
+func Must(err error) {
+	if err != nil {
+		os.Exit(-1)
+	}
 }
